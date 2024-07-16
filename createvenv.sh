@@ -22,4 +22,8 @@ echo "installing dependencies, please wait..."
 file erpvenv/lib/python3.12/site-packages/kiwisolver/_cext.cpython-312-darwin.so
 
 echo "packaging binary / executable file...."
-pyinstaller --onefile --noconsole erp-vis.py
+pyinstaller --onefile --windowed --noupx --clean --log-level=WARN  erp-vis.py
+
+
+echo "deactivating virtual environment...."
+deactivate
