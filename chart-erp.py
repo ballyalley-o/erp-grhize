@@ -55,7 +55,7 @@ def process_logs(directory):
 
     if not all_timestamps:
         print("No valid data found in any of the CSV files.")
-        return [], [], []
+        return [], [], [], []
 
     sorted_data = sorted(zip(all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste))
     all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste = zip(*sorted_data)
@@ -109,7 +109,7 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     component_lengths_info += f"\nCoil Deducted:  $\mathbf{{{coil_length_difference:.2f}}}$ m"
     plt.text(-0.1, 1.1, component_lengths_info, ha='left', va='bottom', transform=ax1.transAxes, fontsize=9, bbox=dict(facecolor='white', alpha=0.5))
     plt.gcf().autofmt_xdate()
-    plt.savefig('./output/erp_visualize.png', bbox_inches='tight')
+    plt.savefig('erp_visualize.png', bbox_inches='tight')
     plt.close()
     print("Graph saved as 'erp_visualize.png'")
 
