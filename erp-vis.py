@@ -1,10 +1,8 @@
 import os
 import csv
-import argparse
-import matplotlib.pyplot as plt
 import datetime
-from tkinter import Tk
-from tkinter.filedialog import askdirectory
+from tkinter import Tk, Label, Button, Text, Scrollbar, Frame, filedialog, messagebox
+import matplotlib.pyplot as plt
 
 def parse_log_file(file_path):
     component_lengths = []
@@ -12,7 +10,6 @@ def parse_log_file(file_path):
     timestamps = []
     component_wastes = []
 
-    print(f"Parsing file: {file_path}")
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)
@@ -28,12 +25,12 @@ def parse_log_file(file_path):
                     coil_lengths.append(coil_weight)
                     component_wastes.append(component_waste)
                 except (ValueError, IndexError) as e:
-                    print(f"Error in file {file_path}, row {row_num}: {e}")
-                    print(f"Row content: {row}")
+                    log_text.insert('end', f"Error in file {file_path}, row {row_num}: {e}\n")
+                    log_text.insert('end', f"Row content: {row}\n")
             else:
-                print(f"Row {row_num} has insufficient columns: {row}")
+                log_text.insert('end', f"Row {row_num} has insufficient columns: {row}\n")
 
-    print(f"Found {len(timestamps)} valid entries in {file_path}")
+    log_text.insert('end', f"Found {len(timestamps)} valid entries in {file_path}\n")
     return timestamps, component_lengths, coil_lengths, component_wastes
 
 def process_logs(directory):
@@ -43,7 +40,7 @@ def process_logs(directory):
     all_component_waste = []
 
     csv_files = [f for f in os.listdir(directory) if f.endswith('.csv')]
-    print(f"Found {len(csv_files)} CSV files in the directory")
+    log_text.insert('end', f"Found {len(csv_files)} CSV files in the directory\n")
 
     for filename in csv_files:
         file_path = os.path.join(directory, filename)
@@ -54,7 +51,7 @@ def process_logs(directory):
         all_component_waste.extend(component_wastes)
 
     if not all_timestamps:
-        print("No valid data found in any of the CSV files.")
+        log_text.insert('end', "No valid data found in any of the CSV files.\n")
         return [], [], [], []
 
     sorted_data = sorted(zip(all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste))
@@ -64,7 +61,7 @@ def process_logs(directory):
 
 def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     if not timestamps:
-        print("No data to plot.")
+        log_text.insert('end', "No data to plot.\n")
         return
 
     fig, ax1 = plt.subplots(figsize=(14, 8))
@@ -109,37 +106,57 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     component_lengths_info += f"\nCoil Deducted:  $\mathbf{{{coil_length_difference:.2f}}}$ m"
     plt.text(-0.1, 1.1, component_lengths_info, ha='left', va='bottom', transform=ax1.transAxes, fontsize=9, bbox=dict(facecolor='white', alpha=0.5))
     plt.gcf().autofmt_xdate()
-    plt.savefig('erp_visualize.png', bbox_inches='tight')
+    log_summary(timestamps, component_lengths, coil_lengths, component_wastes)
+    save_path = filedialog.asksaveasfilename(defaultextension='.png', filetypes=[('PNG Image', '*.png')])
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
+        log_text.insert('end', f"Graph saved as '{save_path}'\n")
     plt.close()
-    print("Graph saved as 'erp_visualize.png'")
 
-def main():
-    root = Tk()
-    root.withdraw()
-    directory = askdirectory(title='Select Directory Containing Log Files')
-    if not directory:
-        print("No directory selected.")
-        return
+def select_directory():
+    directory = filedialog.askdirectory(title='Select Directory Containing Log Files')
+    if directory:
+        timestamps, component_lengths, coil_lengths, component_wastes = process_logs(directory)
+        if timestamps:
+            create_graph(timestamps, component_lengths, coil_lengths, component_wastes)
+        else:
+            log_text.insert('end', "No valid data found in the CSV files.\n")
 
-    timestamps, component_lengths, coil_lengths, component_wastes = process_logs(directory)
-
-    if not timestamps:
-        print("No valid data found in the CSV files.")
-        return
-
-    create_graph(timestamps, component_lengths, coil_lengths, component_wastes)
-
-    print(f"Total number of components: {len(component_lengths)}")
-    print(f"Total component length: {sum(component_lengths):.2f} meters")
-    print(f"Total component waste: {sum(component_wastes):.2f} meters")
-    print(f"Average component length: {sum(component_lengths)/len(component_lengths):.2f} meters")
+def log_summary(timestamps, component_lengths, coil_lengths, component_wastes):
+    log_text.insert('end', f"Total number of components: {len(component_lengths)}\n")
+    log_text.insert('end', f"Total component length: {sum(component_lengths):.2f} meters\n")
+    log_text.insert('end', f"Total component waste: {sum(component_wastes):.2f} meters\n")
+    log_text.insert('end', f"Average component length: {sum(component_lengths)/len(component_lengths):.2f} meters\n")
     if coil_lengths:
         initial_coil_length = coil_lengths[0]
         last_coil_length = coil_lengths[-1]
         coil_length_difference = initial_coil_length - last_coil_length
-        print(f"Coil length deducted: {coil_length_difference:.2f} meters")
+        log_text.insert('end', f"Coil length deducted: {coil_length_difference:.2f} meters\n")
     else:
-        print("No coil length data available.")
+        log_text.insert('end', "No coil length data available.\n")
+
+def main():
+    global log_text
+
+    root = Tk()
+    root.title("ERP Vis")
+
+    Label(root, text="ERP Vis", font=("Helvetica", 16)).pack(pady=10)
+
+    Button(root, text="Select Directory", command=select_directory).pack(pady=10)
+
+    log_frame = Frame(root)
+    log_frame.pack(pady=10, fill="both", expand=True)
+
+    log_text = Text(log_frame, wrap="word", height=15)
+    log_text.pack(side="left", fill="both", expand=True)
+
+    log_scroll = Scrollbar(log_frame, command=log_text.yview)
+    log_scroll.pack(side="right", fill="y")
+
+    log_text.config(yscrollcommand=log_scroll.set)
+
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
