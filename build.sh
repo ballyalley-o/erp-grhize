@@ -2,7 +2,6 @@
 
 echo "deleting existing build...."
 
-
 rm -rf dist
 rm -rf build
 
