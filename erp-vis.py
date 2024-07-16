@@ -1,9 +1,15 @@
 import os
 import csv
 import datetime
-from tkinter import Tk, Label, Button, Text, Scrollbar, Frame, filedialog, messagebox
+from tkinter import ttk, Tk, Label, Button, Text, Scrollbar, Frame, filedialog, messagebox
 import matplotlib.pyplot as plt
 from threading import Thread
+import platform
+
+if platform.system() == "Darwin":
+    from tkmacosx import Button as MacButton
+else:
+    MacButton = ttk.Button
 
 def parse_log_file(file_path, log_text):
     component_lengths = []
@@ -143,7 +149,7 @@ def main():
     global log_text
 
     root = Tk()
-    root.title("🐸 ERP Visualization Tool")
+    root.title("ERP Visualization Tool")
 
     Label(root, text="ERP Vis", font=("Helvetica", 16)).pack(pady=10)
 
