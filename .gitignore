@@ -1,6 +1,8 @@
 __pycache__/
 dist/
+build/
 myenv/
+erpenv/
 sample.py
 summarize-erp.spec
 output/
