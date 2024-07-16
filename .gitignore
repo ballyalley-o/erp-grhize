@@ -6,4 +6,5 @@ erpenv/
 sample.py
 summarize-erp.spec
 output/
+chart-erp.spec
 start.sh
