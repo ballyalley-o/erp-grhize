@@ -3,6 +3,8 @@ import csv
 import argparse
 import matplotlib.pyplot as plt
 import datetime
+from tkinter import Tk
+from tkinter.filedialog import askdirectory
 
 def parse_log_file(file_path):
     component_lengths = []
@@ -55,7 +57,7 @@ def process_logs(directory):
         print("No valid data found in any of the CSV files.")
         return [], [], []
 
-    sorted_data = sorted(zip(all_timestamps, all_component_lengths, all_coil_lengths, component_wastes))
+    sorted_data = sorted(zip(all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste))
     all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste = zip(*sorted_data)
 
     return all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste
@@ -84,7 +86,7 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     line3 = ax3.plot(timestamps, component_wastes, color='tab:green', marker='o', linestyle='-', markersize=2, label='Component Waste')
     ax3.tick_params(axis='y', labelcolor='tab:green')
 
-    plt.title('ERP Log: Component Length, Waste and Coil Length Over Time')
+    plt.title('ERP Log: Component Length and Coil Weight Over Time')
 
     lines = line1 + line2 + line3
     labels = [l.get_label() for l in lines]
@@ -107,11 +109,18 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     component_lengths_info += f"\nCoil Deducted:  $\mathbf{{{coil_length_difference:.2f}}}$ m"
     plt.text(-0.1, 1.1, component_lengths_info, ha='left', va='bottom', transform=ax1.transAxes, fontsize=9, bbox=dict(facecolor='white', alpha=0.5))
     plt.gcf().autofmt_xdate()
-    plt.savefig('./output/erp_chart.png', bbox_inches='tight')
+    plt.savefig('./output/erp_visualize.png', bbox_inches='tight')
     plt.close()
-    print("Graph saved as 'erp_chart.png'")
+    print("Graph saved as 'erp_visualize.png'")
 
-def main(directory):
+def main():
+    root = Tk()
+    root.withdraw()
+    directory = askdirectory(title='Select Directory Containing Log Files')
+    if not directory:
+        print("No directory selected.")
+        return
+
     timestamps, component_lengths, coil_lengths, component_wastes = process_logs(directory)
 
     if not timestamps:
@@ -133,7 +142,4 @@ def main(directory):
         print("No coil length data available.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process log files to display component length and coil weight over time.')
-    parser.add_argument('directory', type=str, help='The directory containing the log files')
-    args = parser.parse_args()
-    main(args.directory)
+    main()
