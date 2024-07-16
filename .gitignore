@@ -2,9 +2,11 @@ __pycache__/
 dist/
 build/
 myenv/
-erpenv/
+erpvenv/
 sample.py
 summarize-erp.spec
 output/
 chart-erp.spec
 start.sh
+
+erp-vis.spec
