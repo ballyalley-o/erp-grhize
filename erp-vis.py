@@ -3,8 +3,9 @@ import csv
 import datetime
 from tkinter import Tk, Label, Button, Text, Scrollbar, Frame, filedialog, messagebox
 import matplotlib.pyplot as plt
+from threading import Thread
 
-def parse_log_file(file_path):
+def parse_log_file(file_path, log_text):
     component_lengths = []
     coil_lengths = []
     timestamps = []
@@ -33,7 +34,7 @@ def parse_log_file(file_path):
     log_text.insert('end', f"Found {len(timestamps)} valid entries in {file_path}\n")
     return timestamps, component_lengths, coil_lengths, component_wastes
 
-def process_logs(directory):
+def process_logs(directory, log_text):
     all_timestamps = []
     all_component_lengths = []
     all_coil_lengths = []
@@ -44,7 +45,7 @@ def process_logs(directory):
 
     for filename in csv_files:
         file_path = os.path.join(directory, filename)
-        timestamps, component_lengths, coil_lengths, component_wastes = parse_log_file(file_path)
+        timestamps, component_lengths, coil_lengths, component_wastes = parse_log_file(file_path, log_text)
         all_timestamps.extend(timestamps)
         all_component_lengths.extend(component_lengths)
         all_coil_lengths.extend(coil_lengths)
@@ -59,7 +60,7 @@ def process_logs(directory):
 
     return all_timestamps, all_component_lengths, all_coil_lengths, all_component_waste
 
-def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
+def create_graph(timestamps, component_lengths, coil_lengths, component_wastes, log_text):
     if not timestamps:
         log_text.insert('end', "No data to plot.\n")
         return
@@ -110,17 +111,13 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes):
     save_path = filedialog.asksaveasfilename(defaultextension='.png', filetypes=[('PNG Image', '*.png')])
     if save_path:
         plt.savefig(save_path, bbox_inches='tight')
-        log_text.insert('end', f"Graph saved as '{save_path}'\n")
+        log_text.insert('end', f"Graph saved in '{save_path}'\n")
     plt.close()
 
 def select_directory():
     directory = filedialog.askdirectory(title='Select Directory Containing Log Files')
     if directory:
-        timestamps, component_lengths, coil_lengths, component_wastes = process_logs(directory)
-        if timestamps:
-            create_graph(timestamps, component_lengths, coil_lengths, component_wastes)
-        else:
-            log_text.insert('end', "No valid data found in the CSV files.\n")
+        Thread(target=process_and_plot, args=(directory,)).start()
 
 def log_summary(timestamps, component_lengths, coil_lengths, component_wastes):
     log_text.insert('end', f"Total number of components: {len(component_lengths)}\n")
@@ -135,11 +132,18 @@ def log_summary(timestamps, component_lengths, coil_lengths, component_wastes):
     else:
         log_text.insert('end', "No coil length data available.\n")
 
+def process_and_plot(directory):
+    global log_text
+
+    timestamps, component_lengths, coil_lengths, component_wastes = process_logs(directory, log_text)
+    if timestamps:
+        create_graph(timestamps, component_lengths, coil_lengths, component_wastes, log_text)
+
 def main():
     global log_text
 
     root = Tk()
-    root.title("ERP Vis")
+    root.title("🐸 ERP Visualization Tool")
 
     Label(root, text="ERP Vis", font=("Helvetica", 16)).pack(pady=10)
 
