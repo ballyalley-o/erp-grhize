@@ -6,11 +6,6 @@ import matplotlib.pyplot as plt
 from threading import Thread
 import platform
 
-if platform.system() == "Darwin":
-    from tkmacosx import Button as MacButton
-else:
-    MacButton = ttk.Button
-
 def parse_log_file(file_path, log_text):
     component_lengths = []
     coil_lengths = []
@@ -26,10 +21,10 @@ def parse_log_file(file_path, log_text):
                     timestamp = datetime.datetime.strptime(row[0], '%Y-%m-%dT%H:%M:%S')
                     component_length = float(row[11]) / 1000
                     component_waste = float(row[12]) / 1000
-                    coil_weight = float(row[5])
+                    coil_length = float(row[5])
                     timestamps.append(timestamp)
                     component_lengths.append(component_length)
-                    coil_lengths.append(coil_weight)
+                    coil_lengths.append(coil_length)
                     component_wastes.append(component_waste)
                 except (ValueError, IndexError) as e:
                     log_text.insert('end', f"Error in file {file_path}, row {row_num}: {e}\n")
@@ -80,7 +75,7 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes, 
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('Coil Length', color='tab:orange')
-    line2 = ax2.plot(timestamps, coil_lengths, color='tab:orange', marker='o', linestyle='-', markersize=2, label='Coil Weight')
+    line2 = ax2.plot(timestamps, coil_lengths, color='tab:orange', marker='o', linestyle='-', markersize=2, label='Coil Length')
     ax2.tick_params(axis='y', labelcolor='tab:orange')
 
     ax1.grid(True, linestyle='--', alpha=0.7)
@@ -90,7 +85,7 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes, 
     line3 = ax3.plot(timestamps, component_wastes, color='tab:green', marker='o', linestyle='-', markersize=2, label='Component Waste')
     ax3.tick_params(axis='y', labelcolor='tab:green')
 
-    plt.title('ERP Log: Component Length and Coil Weight Over Time')
+    plt.title('ERP Log: Component Length, Waste to Coil Length over Time')
 
     lines = line1 + line2 + line3
     labels = [l.get_label() for l in lines]
@@ -116,8 +111,12 @@ def create_graph(timestamps, component_lengths, coil_lengths, component_wastes, 
     log_summary(timestamps, component_lengths, coil_lengths, component_wastes)
     save_path = filedialog.asksaveasfilename(defaultextension='.png', filetypes=[('PNG Image', '*.png')])
     if save_path:
-        plt.savefig(save_path, bbox_inches='tight')
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
         log_text.insert('end', f"Graph saved in '{save_path}'\n")
+        if platform.system() == 'Windows':
+            os.startfile(save_path)
+        else:
+            os.system(f'xdg-open "{save_path}"')
     plt.close()
 
 def select_directory():
